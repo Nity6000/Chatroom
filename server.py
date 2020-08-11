@@ -46,7 +46,6 @@ def handle_client(connection, address):
         message_length = connection.recv(MESSAGE_HEADER).decode(MESSAGE_FORMAT)
         if message_length:
             message_length = int(message_length)
-            #The server is then allowed to decode the actual message
             message = connection.recv(message_length).decode(MESSAGE_FORMAT)
             #Checks for a special client message that signifies a disconnection.
             if message == MESSAGE_DISCONNECT:
@@ -54,8 +53,18 @@ def handle_client(connection, address):
                 client_list.remove(connection)
             else:
                 print(f"[{address}]: {message} ({message_length})")
+                broadcast_message(message, connection)
 
     connection.close
+
+def broadcast_message(message, connection):
+    for clients in client_list:
+        if clients != connection:
+            try:
+                clients.send(message)
+            except:
+                clients.close()
+                client_list.remove(connection)
 
 print("Server Online")
 server_start()
